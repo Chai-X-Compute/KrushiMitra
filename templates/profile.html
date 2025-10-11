@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Farmer Resource Pooling{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="bg-green-600 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <i class="fas fa-tractor text-white text-2xl mr-3"></i>
+                <span class="text-white text-xl font-bold">Farmer Resource Pool</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/dashboard" class="text-white hover:text-green-200">
+                    <i class="fas fa-home mr-1"></i> Dashboard
+                </a>
+                <a href="/marketplace" class="text-white hover:text-green-200">
+                    <i class="fas fa-store mr-1"></i> Marketplace
+                </a>
+                <a href="/add-resource" class="text-white hover:text-green-200">
+                    <i class="fas fa-plus-circle mr-1"></i> Add Resource
+                </a>
+                <a href="/my-resources" class="text-white hover:text-green-200">
+                    <i class="fas fa-box mr-1"></i> My Resources
+                </a>
+                <a href="/profile" class="text-white hover:text-green-200">
+                    <i class="fas fa-user mr-1"></i> Profile
+                </a>
+                <div class="language-selector">
+                    <i class="fas fa-globe"></i>
+                    <div id="google_translate_element"></div>
+                </div>
+                <button onclick="logout()" class="text-white hover:text-green-200">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">
+            <i class="fas fa-user text-green-600 mr-2"></i> My Profile
+        </h1>
+        
+        <form id="profileForm">
+            <div class="space-y-6">
+                <!-- Name -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Full Name
+                    </label>
+                    <input type="text" id="name" name="name" value="{{ user.name }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                
+                <!-- Email (Read-only) -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                        Email
+                    </label>
+                    <input type="email" id="email" name="email" value="{{ user.email }}" readonly
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed">
+                    <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                </div>
+                
+                <!-- Phone -->
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number
+                    </label>
+                    <input type="tel" id="phone" name="phone" value="{{ user.phone }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                
+                <!-- Location -->
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700 mb-2">
+                        Location
+                    </label>
+                    <input type="text" id="location" name="location" value="{{ user.location }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                
+                <!-- Language Preference -->
+                <div>
+                    <label for="language_preference" class="block text-sm font-medium text-gray-700 mb-2">
+                        Preferred Language
+                    </label>
+                    <select id="language_preference" name="language_preference"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="en" {{ 'selected' if user.language_preference == 'en' else '' }}>English</option>
+                        <option value="hi" {{ 'selected' if user.language_preference == 'hi' else '' }}>हिंदी (Hindi)</option>
+                        <option value="mr" {{ 'selected' if user.language_preference == 'mr' else '' }}>मराठी (Marathi)</option>
+                    </select>
+                </div>
+                
+                <!-- Member Since -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Member Since
+                    </label>
+                    <p class="text-gray-600">{{ user.created_at.strftime('%B %d, %Y') }}</p>
+                </div>
+                
+                <!-- Error Message -->
+                <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                </div>
+                
+                <!-- Success Message -->
+                <div id="successMessage" class="hidden bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">
+                </div>
+                
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit" 
+                            class="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-medium">
+                        <i class="fas fa-save mr-2"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function logout() {
+        try {
+            await auth.signOut();
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        
+        errorMessage.classList.add('hidden');
+        successMessage.classList.add('hidden');
+        
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+        
+        try {
+            const formData = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                location: document.getElementById('location').value,
+                language_preference: document.getElementById('language_preference').value
+            };
+            
+            const response = await fetch('/api/user/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                successMessage.textContent = 'Profile updated successfully!';
+                successMessage.classList.remove('hidden');
+            } else {
+                errorMessage.textContent = data.message;
+                errorMessage.classList.remove('hidden');
+            }
+        } catch (error) {
+            errorMessage.textContent = 'An error occurred. Please try again.';
+            errorMessage.classList.remove('hidden');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-save mr-2"></i> Save Changes';
+        }
+    });
+</script>
+{% endblock %}

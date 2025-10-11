@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Farmer Resource Pooling{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <!-- Google Translate -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi,mr',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .goog-te-banner-frame.skiptranslate {
+            display: none !important;
+        }
+        body {
+            top: 0px !important;
+        }
+        
+        /* Language Selector Styling - Match Navigation Style */
+        .language-selector {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+        }
+        
+        .language-selector i {
+            font-size: 16px;
+            color: white;
+        }
+        
+        #google_translate_element {
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .goog-te-gadget-simple {
+            background-color: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            font-size: 14px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .goog-te-gadget-simple:hover {
+            color: #d1fae5 !important;
+        }
+        
+        .goog-te-gadget-simple .goog-te-menu-value {
+            color: white !important;
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+        
+        .goog-te-gadget-simple .goog-te-menu-value span {
+            color: white !important;
+        }
+        
+        /* Hide default Google icon */
+        .goog-te-gadget-icon {
+            display: none !important;
+        }
+        
+        /* Hide the arrow/dropdown icon */
+        .goog-te-gadget-simple img {
+            display: none !important;
+        }
+        
+        /* Dropdown styling */
+        .goog-te-combo {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: white !important;
+            padding: 6px 10px !important;
+            border-radius: 4px !important;
+            font-size: 14px !important;
+            cursor: pointer !important;
+            outline: none !important;
+        }
+        
+        .goog-te-combo:hover {
+            background: rgba(255, 255, 255, 0.25) !important;
+        }
+        
+        .goog-te-combo option {
+            color: #374151 !important;
+            background: white !important;
+            padding: 8px !important;
+        }
+        
+        /* Image placeholder styling */
+        .resource-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        }
+        
+        .resource-image-error {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            font-size: 48px;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    {% block content %}{% endblock %}
+    
+    <!-- Firebase Configuration -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPqghw0GaqiIEiDcE9mtjG_lMbpaZqVrs",
+            authDomain: "farmerresourcepool.firebaseapp.com",
+            projectId: "farmerresourcepool",
+            storageBucket: "farmerresourcepool.firebasestorage.app",
+            messagingSenderId: "632882075807",
+            appId: "1:632882075807:web:a566d4b85625556b8baaaa"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

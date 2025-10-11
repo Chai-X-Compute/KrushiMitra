@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Farmer Resource Pooling{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="bg-green-600 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <i class="fas fa-tractor text-white text-2xl mr-3"></i>
+                <span class="text-white text-xl font-bold">Farmer Resource Pool</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/dashboard" class="text-white hover:text-green-200">
+                    <i class="fas fa-home mr-1"></i> Dashboard
+                </a>
+                <a href="/marketplace" class="text-white hover:text-green-200">
+                    <i class="fas fa-store mr-1"></i> Marketplace
+                </a>
+                <a href="/add-resource" class="text-white hover:text-green-200">
+                    <i class="fas fa-plus-circle mr-1"></i> Add Resource
+                </a>
+                <a href="/my-resources" class="text-white hover:text-green-200">
+                    <i class="fas fa-box mr-1"></i> My Resources
+                </a>
+                <a href="/profile" class="text-white hover:text-green-200">
+                    <i class="fas fa-user mr-1"></i> Profile
+                </a>
+                <div class="language-selector">
+                    <i class="fas fa-globe"></i>
+                    <div id="google_translate_element"></div>
+                </div>
+                <button onclick="logout()" class="text-white hover:text-green-200">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Welcome Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            Welcome, {{ user.name }}! 🌾
+        </h1>
+        <p class="text-gray-600">Manage your resources and explore the marketplace</p>
+    </div>
+
+    <!-- Weather Widget -->
+    <div class="bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg shadow-md p-6 mb-8 text-white" id="weatherWidget">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-2xl font-bold mb-2">
+                    <i class="fas fa-cloud-sun mr-2"></i> Weather Information
+                </h2>
+                <p class="text-sm opacity-90" id="weatherLocation">Loading weather data...</p>
+            </div>
+            <div id="weatherIcon" class="text-6xl"></div>
+        </div>
+        
+        <!-- City Search -->
+        <div class="mb-4 flex gap-2">
+            <input type="text" 
+                   id="citySearchInput" 
+                   placeholder="Search city (e.g., Mumbai, Pune, Delhi)" 
+                   class="flex-1 px-4 py-2 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-white"
+                   onkeypress="if(event.key==='Enter') searchCityWeather()">
+            <button onclick="searchCityWeather()" 
+                    class="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition">
+                <i class="fas fa-search mr-1"></i> Search
+            </button>
+            <button onclick="getWeather()" 
+                    class="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition"
+                    title="Use my location">
+                <i class="fas fa-location-arrow"></i>
+            </button>
+        </div>
+        
+        <div id="weatherDetails" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Weather details will be populated here -->
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="bg-green-100 rounded-full p-3">
+                    <i class="fas fa-tools text-green-600 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Available Resources</p>
+                    <p class="text-2xl font-bold text-gray-900" id="totalResources">0</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="bg-blue-100 rounded-full p-3">
+                    <i class="fas fa-box text-blue-600 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">My Listings</p>
+                    <p class="text-2xl font-bold text-gray-900" id="myListings">0</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="bg-yellow-100 rounded-full p-3">
+                    <i class="fas fa-users text-yellow-600 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Community Members</p>
+                    <p class="text-2xl font-bold text-gray-900">1000+</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Resources -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">
+            <i class="fas fa-fire text-orange-500 mr-2"></i> Recently Added Resources
+        </h2>
+        <div id="recentResources" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Resources will be populated here -->
+        </div>
+        <div class="text-center mt-6">
+            <a href="/marketplace" class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
+                View All Resources <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Logout function
+    async function logout() {
+        try {
+            await auth.signOut();
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    }
+
+    // Get user location and fetch weather
+    function getWeather() {
+        console.log('🌍 Attempting to get location...');
+        
+        // Check if user has set a preferred location
+        const preferredCity = localStorage.getItem('preferredCity');
+        if (preferredCity) {
+            console.log(`📍 Using saved location: ${preferredCity}`);
+            fetchWeatherByCity(preferredCity);
+            return;
+        }
+        
+        if (navigator.geolocation) {
+            // Request location with high accuracy
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    console.log(`📍 GPS Location detected: ${lat}, ${lon}`);
+                    
+                    try {
+                        const response = await fetch(`/api/weather?lat=${lat}&lon=${lon}`);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            console.log('✅ Weather data received:', data.data.city);
+                            console.log('ℹ️  If this is not your area, you can change it below');
+                            displayWeather(data.data);
+                        } else {
+                            console.error('❌ Weather API error:', data.message);
+                            fetchWeatherByCity('Loni Kalbhor');
+                        }
+                    } catch (error) {
+                        console.error('❌ Weather fetch error:', error);
+                        fetchWeatherByCity('Loni Kalbhor');
+                    }
+                },
+                (error) => {
+                    console.error('❌ Geolocation error:', error.message);
+                    console.log('ℹ️  Using fallback location: Loni Kalbhor');
+                    fetchWeatherByCity('Loni Kalbhor');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            console.log('⚠️  Geolocation not supported, using Loni Kalbhor');
+            fetchWeatherByCity('Loni Kalbhor');
+        }
+    }
+    
+    // Function to change location
+    function changeLocation() {
+        const newCity = prompt('Enter your city name (e.g., Loni Kalbhor, Pune):', localStorage.getItem('preferredCity') || 'Loni Kalbhor');
+        if (newCity && newCity.trim()) {
+            localStorage.setItem('preferredCity', newCity.trim());
+            console.log(`📍 Location changed to: ${newCity}`);
+            fetchWeatherByCity(newCity.trim());
+        }
+    }
+    
+    // Function to search city weather
+    function searchCityWeather() {
+        const cityInput = document.getElementById('citySearchInput');
+        const city = cityInput.value.trim();
+        
+        if (!city) {
+            alert('Please enter a city name');
+            return;
+        }
+        
+        console.log(`🔍 Searching weather for: ${city}`);
+        fetchWeatherByCity(city);
+    }
+
+    async function fetchWeatherByCity(city) {
+        try {
+            const response = await fetch(`/api/weather?city=${city}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                displayWeather(data.data);
+            }
+        } catch (error) {
+            console.error('Weather fetch error:', error);
+        }
+    }
+
+    function displayWeather(weather) {
+        const weatherIcon = document.getElementById('weatherIcon');
+        const weatherDetails = document.getElementById('weatherDetails');
+        
+        weatherIcon.innerHTML = `<img src="https://openweathermap.org/img/wn/${weather.icon}@2x.png" alt="Weather" class="w-24 h-24">`;
+        
+        weatherDetails.innerHTML = `
+            <div>
+                <p class="text-sm opacity-75">Temperature</p>
+                <p class="text-2xl font-bold">${Math.round(weather.temperature)}°C</p>
+            </div>
+            <div>
+                <p class="text-sm opacity-75">Feels Like</p>
+                <p class="text-2xl font-bold">${Math.round(weather.feels_like)}°C</p>
+            </div>
+            <div>
+                <p class="text-sm opacity-75">Humidity</p>
+                <p class="text-2xl font-bold">${weather.humidity}%</p>
+            </div>
+            <div>
+                <p class="text-sm opacity-75">Wind Speed</p>
+                <p class="text-2xl font-bold">${weather.wind_speed} m/s</p>
+            </div>
+        `;
+        
+        const locationText = weather.country ? `${weather.city}, ${weather.country}` : weather.city;
+        const coordText = weather.lat && weather.lon ? ` (${weather.lat.toFixed(2)}, ${weather.lon.toFixed(2)})` : '';
+        document.getElementById('weatherLocation').textContent = `${locationText}${coordText} - ${weather.description}`;
+        
+        console.log(`✅ Weather displayed for: ${locationText}`);
+    }
+
+    // Fetch recent resources
+    async function fetchRecentResources() {
+        try {
+            const response = await fetch('/api/resources?sort=newest');
+            const data = await response.json();
+            
+            if (data.success) {
+                displayRecentResources(data.data.slice(0, 3));
+                document.getElementById('totalResources').textContent = data.data.length;
+            }
+        } catch (error) {
+            console.error('Resources fetch error:', error);
+        }
+    }
+
+    function displayRecentResources(resources) {
+        const container = document.getElementById('recentResources');
+        
+        if (resources.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 col-span-3 text-center">No resources available yet.</p>';
+            return;
+        }
+        
+        container.innerHTML = resources.map(resource => `
+            <div class="border rounded-lg overflow-hidden hover:shadow-lg transition">
+                <img src="${resource.image_url || '/static/images/placeholder.svg'}" 
+                     alt="${resource.name}" 
+                     class="resource-image"
+                     onerror="this.onerror=null; this.src='/static/images/placeholder.svg';">
+                <div class="p-4">
+                    <h3 class="font-bold text-lg mb-2">${resource.name}</h3>
+                    <p class="text-gray-600 text-sm mb-2">${resource.description.substring(0, 80)}...</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-green-600 font-bold">₹${resource.price}</span>
+                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">${resource.listing_type}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Fetch my resources count
+    async function fetchMyResources() {
+        try {
+            const response = await fetch('/api/resources/my');
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('myListings').textContent = data.data.length;
+            }
+        } catch (error) {
+            console.error('My resources fetch error:', error);
+        }
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+        getWeather();
+        fetchRecentResources();
+        fetchMyResources();
+    });
+</script>
+{% endblock %}

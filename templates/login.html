@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Farmer Resource Pooling{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 to-blue-500 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-2xl">
+        <div>
+            <div class="mx-auto h-16 w-16 bg-green-600 rounded-full flex items-center justify-center">
+                <i class="fas fa-tractor text-white text-3xl"></i>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Farmer Resource Pool
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Sign in to your account
+            </p>
+            
+            <!-- Language Selector -->
+            <div class="mt-4 flex justify-center">
+                <div id="google_translate_element"></div>
+            </div>
+        </div>
+        
+        <form class="mt-8 space-y-6" id="loginForm">
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div>
+                    <label for="email" class="sr-only">Email address</label>
+                    <input id="email" name="email" type="email" required 
+                           class="appearance-none rounded-t-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm" 
+                           placeholder="Email address">
+                </div>
+                <div>
+                    <label for="password" class="sr-only">Password</label>
+                    <input id="password" name="password" type="password" required 
+                           class="appearance-none rounded-b-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm" 
+                           placeholder="Password">
+                </div>
+            </div>
+
+            <div id="errorMessage" class="hidden text-red-600 text-sm text-center"></div>
+
+            <div>
+                <button type="submit" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <i class="fas fa-sign-in-alt text-green-500 group-hover:text-green-400"></i>
+                    </span>
+                    Sign in
+                </button>
+            </div>
+            
+            <div class="text-center">
+                <a href="/signup" class="font-medium text-green-600 hover:text-green-500">
+                    Don't have an account? Sign up
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorMessage = document.getElementById('errorMessage');
+        
+        try {
+            // Sign in with Firebase
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            // Send to backend
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email,
+                    firebase_uid: user.uid
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.href = '/dashboard';
+            } else {
+                errorMessage.textContent = data.message;
+                errorMessage.classList.remove('hidden');
+            }
+        } catch (error) {
+            errorMessage.textContent = error.message;
+            errorMessage.classList.remove('hidden');
+        }
+    });
+</script>
+{% endblock %}

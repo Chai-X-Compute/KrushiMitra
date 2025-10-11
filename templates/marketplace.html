@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Marketplace - Farmer Resource Pooling{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="bg-green-600 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <i class="fas fa-tractor text-white text-2xl mr-3"></i>
+                <span class="text-white text-xl font-bold">Farmer Resource Pool</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/dashboard" class="text-white hover:text-green-200">
+                    <i class="fas fa-home mr-1"></i> Dashboard
+                </a>
+                <a href="/marketplace" class="text-white hover:text-green-200">
+                    <i class="fas fa-store mr-1"></i> Marketplace
+                </a>
+                <a href="/add-resource" class="text-white hover:text-green-200">
+                    <i class="fas fa-plus-circle mr-1"></i> Add Resource
+                </a>
+                <a href="/my-resources" class="text-white hover:text-green-200">
+                    <i class="fas fa-box mr-1"></i> My Resources
+                </a>
+                <a href="/profile" class="text-white hover:text-green-200">
+                    <i class="fas fa-user mr-1"></i> Profile
+                </a>
+                <div class="language-selector">
+                    <i class="fas fa-globe"></i>
+                    <div id="google_translate_element"></div>
+                </div>
+                <button onclick="logout()" class="text-white hover:text-green-200">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">
+            <i class="fas fa-store text-green-600 mr-2"></i> Resource Marketplace
+        </h1>
+        
+        <!-- Search and Filters -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-2">
+                <input type="text" id="searchInput" placeholder="Search resources..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            
+            <div>
+                <select id="categoryFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <option value="all">All Categories</option>
+                    <option value="farming_tools">🚜 Farming Tools</option>
+                    <option value="livestock">🐄 Livestock</option>
+                    <option value="electronics">⚡ Electronics</option>
+                    <option value="fertilizers">🌱 Fertilizers</option>
+                    <option value="pesticides">🐛 Pesticides</option>
+                    <option value="seeds">🌾 Seeds</option>
+                    <option value="irrigation">💧 Irrigation</option>
+                    <option value="other">📦 Other</option>
+                </select>
+            </div>
+            
+            <div>
+                <select id="sortFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <option value="newest">Newest First</option>
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                    <option value="rating">Highest Rated</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Listing Type Filter -->
+        <div class="flex gap-2 mt-4">
+            <button onclick="filterByType('all')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition" id="btn-all">
+                All
+            </button>
+            <button onclick="filterByType('rent')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition" id="btn-rent">
+                For Rent
+            </button>
+            <button onclick="filterByType('borrow')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition" id="btn-borrow">
+                For Borrow
+            </button>
+            <button onclick="filterByType('sell')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition" id="btn-sell">
+                For Sale
+            </button>
+        </div>
+    </div>
+
+    <!-- Resources Grid -->
+    <div id="resourcesGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <!-- Resources will be populated here -->
+    </div>
+    
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center py-12">
+        <i class="fas fa-spinner fa-spin text-4xl text-green-600"></i>
+        <p class="text-gray-600 mt-4">Loading resources...</p>
+    </div>
+    
+    <!-- Empty State -->
+    <div id="emptyState" class="hidden text-center py-12">
+        <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
+        <p class="text-gray-600 text-lg">No resources found</p>
+    </div>
+</div>
+
+<!-- Resource Detail Modal -->
+<div id="resourceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-start mb-4">
+                <h2 id="modalTitle" class="text-2xl font-bold text-gray-900"></h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allResources = [];
+    let currentFilter = 'all';
+
+    async function logout() {
+        try {
+            await auth.signOut();
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    }
+
+    async function fetchResources() {
+        try {
+            const category = document.getElementById('categoryFilter').value;
+            const sort = document.getElementById('sortFilter').value;
+            const search = document.getElementById('searchInput').value;
+            
+            let url = `/api/resources?sort=${sort}`;
+            if (category !== 'all') url += `&category=${category}`;
+            if (search) url += `&search=${search}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.success) {
+                allResources = data.data;
+                displayResources(allResources);
+            }
+        } catch (error) {
+            console.error('Resources fetch error:', error);
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+        }
+    }
+
+    function displayResources(resources) {
+        const grid = document.getElementById('resourcesGrid');
+        const loadingState = document.getElementById('loadingState');
+        const emptyState = document.getElementById('emptyState');
+        
+        loadingState.classList.add('hidden');
+        
+        // Filter by listing type if needed
+        let filteredResources = resources;
+        if (currentFilter !== 'all') {
+            filteredResources = resources.filter(r => r.listing_type === currentFilter);
+        }
+        
+        if (filteredResources.length === 0) {
+            grid.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
+        }
+        
+        emptyState.classList.add('hidden');
+        
+        grid.innerHTML = filteredResources.map(resource => {
+            const imgSrc = resource.image_url && resource.image_url !== '/static/images/placeholder.svg' 
+                ? resource.image_url 
+                : '/static/images/placeholder.svg';
+            console.log('Resource:', resource.name, 'Image URL:', imgSrc);
+            return `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition cursor-pointer" onclick="showResourceDetail(${resource.id})">
+                <img src="${imgSrc}" 
+                     alt="${resource.name}" 
+                     class="resource-image"
+                     loading="lazy"
+                     onerror="console.error('Image failed to load:', this.src); this.onerror=null; this.src='/static/images/placeholder.svg';">
+                <div class="p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg">${resource.name}</h3>
+                        <span class="text-xs bg-${getListingTypeColor(resource.listing_type)}-100 text-${getListingTypeColor(resource.listing_type)}-800 px-2 py-1 rounded">
+                            ${resource.listing_type}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-2">${resource.description}</p>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-green-600 font-bold text-xl">₹${resource.price}</span>
+                        <span class="text-yellow-500">
+                            ${'★'.repeat(Math.round(resource.rating))}${'☆'.repeat(5 - Math.round(resource.rating))}
+                        </span>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        <i class="fas fa-map-marker-alt mr-1"></i> ${resource.owner.location}
+                    </div>
+                    <div class="mt-3 pt-3 border-t">
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-user mr-2"></i>
+                            <span>${resource.owner.name}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        }).join('');
+    }
+
+    function getListingTypeColor(type) {
+        const colors = {
+            'rent': 'blue',
+            'borrow': 'green',
+            'sell': 'purple'
+        };
+        return colors[type] || 'gray';
+    }
+
+    function filterByType(type) {
+        currentFilter = type;
+        
+        // Update button styles
+        ['all', 'rent', 'borrow', 'sell'].forEach(t => {
+            const btn = document.getElementById(`btn-${t}`);
+            if (t === type) {
+                btn.className = 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition';
+            } else {
+                btn.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition';
+            }
+        });
+        
+        displayResources(allResources);
+    }
+
+    function showResourceDetail(resourceId) {
+        const resource = allResources.find(r => r.id === resourceId);
+        if (!resource) return;
+        
+        const modal = document.getElementById('resourceModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        
+        modalTitle.textContent = resource.name;
+        modalContent.innerHTML = `
+            <img src="${resource.image_url || '/static/images/placeholder.svg'}" alt="${resource.name}" class="w-full h-64 object-cover rounded-lg mb-4" onerror="this.onerror=null; this.src='/static/images/placeholder.svg';">
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <p class="text-sm text-gray-600">Category</p>
+                    <p class="font-semibold">${resource.category}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Listing Type</p>
+                    <p class="font-semibold capitalize">${resource.listing_type}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Price</p>
+                    <p class="font-semibold text-green-600 text-xl">₹${resource.price}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Condition</p>
+                    <p class="font-semibold capitalize">${resource.condition}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Age</p>
+                    <p class="font-semibold">${resource.age_years} years</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Quality</p>
+                    <p class="font-semibold">${resource.quality}/10</p>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 mb-2">Description</p>
+                <p class="text-gray-800">${resource.description}</p>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <h3 class="font-bold mb-2">Owner Information</h3>
+                <p class="text-gray-700"><i class="fas fa-user mr-2"></i> ${resource.owner.name}</p>
+                <p class="text-gray-700"><i class="fas fa-phone mr-2"></i> ${resource.owner.phone}</p>
+                <p class="text-gray-700"><i class="fas fa-map-marker-alt mr-2"></i> ${resource.owner.location}</p>
+            </div>
+            
+            <div class="flex gap-2">
+                <a href="tel:${resource.owner.phone}" class="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition text-center">
+                    <i class="fas fa-phone mr-2"></i> Call Owner
+                </a>
+                <a href="https://wa.me/${resource.owner.phone.replace(/\D/g, '')}" target="_blank" class="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition text-center">
+                    <i class="fab fa-whatsapp mr-2"></i> WhatsApp
+                </a>
+            </div>
+        `;
+        
+        modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('resourceModal').classList.add('hidden');
+    }
+
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('input', fetchResources);
+    document.getElementById('categoryFilter').addEventListener('change', fetchResources);
+    document.getElementById('sortFilter').addEventListener('change', fetchResources);
+
+    // Close modal on outside click
+    document.getElementById('resourceModal').addEventListener('click', (e) => {
+        if (e.target.id === 'resourceModal') {
+            closeModal();
+        }
+    });
+
+    // Initialize
+    window.addEventListener('load', fetchResources);
+</script>
+{% endblock %}
