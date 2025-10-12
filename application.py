@@ -14,20 +14,20 @@ import uuid
 # Load environment variables
 load_dotenv()
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+application = Flask(__name__)
+application.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 db_url = os.getenv('DATABASE_URL')
 if not db_url:
     raise ValueError("DATABASE_URL environment variable is not set. Please provide a valid MySQL connection string.")
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+application.config['SQLALCHEMY_DATABASE_URI'] = db_url
+application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+application.config['UPLOAD_FOLDER'] = 'static/uploads'
+application.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-CORS(app)
+CORS(application)
 
 # Initialize database
-init_db(app)
+init_db(application)
 
 # AWS S3 Configuration
 s3_client = None
@@ -61,44 +61,44 @@ def login_required(f):
     return decorated_function
 
 # Create upload folder if it doesn't exist
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(application.config['UPLOAD_FOLDER'], exist_ok=True)
 
-@app.route('/')
+@application.route('/')
 def index():
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
-@app.route('/login')
+@application.route('/login')
 def login():
     return render_template('login.html')
 
-@app.route('/signup')
+@application.route('/signup')
 def signup():
     return render_template('signup.html')
 
-@app.route('/dashboard')
+@application.route('/dashboard')
 @login_required
 def dashboard():
     user = User.query.get(session['user_id'])
     return render_template('dashboard.html', user=user)
 
-@app.route('/marketplace')
+@application.route('/marketplace')
 @login_required
 def marketplace():
     return render_template('marketplace.html')
 
-@app.route('/add-resource')
+@application.route('/add-resource')
 @login_required
 def add_resource():
     return render_template('add_resource.html')
 
-@app.route('/my-resources')
+@application.route('/my-resources')
 @login_required
 def my_resources():
     return render_template('my_resources.html')
 
-@app.route('/profile')
+@application.route('/profile')
 @login_required
 def profile():
     user = User.query.get(session['user_id'])
@@ -106,7 +106,7 @@ def profile():
 
 # API Routes
 
-@app.route('/api/auth/register', methods=['POST'])
+@application.route('/api/auth/register', methods=['POST'])
 def register():
     try:
         data = request.json
@@ -144,7 +144,7 @@ def register():
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/auth/login', methods=['POST'])
+@application.route('/api/auth/login', methods=['POST'])
 def api_login():
     try:
         data = request.json
@@ -170,12 +170,12 @@ def api_login():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/auth/logout', methods=['POST'])
+@application.route('/api/auth/logout', methods=['POST'])
 def logout():
     session.pop('user_id', None)
     return jsonify({'success': True, 'message': 'Logged out successfully'})
 
-@app.route('/api/weather', methods=['GET'])
+@application.route('/api/weather', methods=['GET'])
 def get_weather():
     try:
         lat = request.args.get('lat')
@@ -222,7 +222,7 @@ def get_weather():
         print(f"❌ Weather exception: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/weather/forecast', methods=['GET'])
+@application.route('/api/weather/forecast', methods=['GET'])
 def get_forecast():
     try:
         lat = request.args.get('lat')
@@ -252,7 +252,7 @@ def get_forecast():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/resources', methods=['GET'])
+@application.route('/api/resources', methods=['GET'])
 def get_resources():
     try:
         category = request.args.get('category')
@@ -307,7 +307,7 @@ def get_resources():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/resources/my', methods=['GET'])
+@application.route('/api/resources/my', methods=['GET'])
 @login_required
 def get_my_resources():
     try:
@@ -334,7 +334,7 @@ def get_my_resources():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/resources', methods=['POST'])
+@application.route('/api/resources', methods=['POST'])
 @login_required
 def create_resource():
     try:
@@ -348,7 +348,7 @@ def create_resource():
                 unique_filename = f"{uuid.uuid4()}_{filename}"
                 
                 # Save to local storage first (always works)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                filepath = os.path.join(application.config['UPLOAD_FOLDER'], unique_filename)
                 file.save(filepath)
                 image_url = f"/static/uploads/{unique_filename}"
                 print(f"✅ Image saved locally: {image_url}")
@@ -398,7 +398,7 @@ def create_resource():
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/resources/<int:resource_id>', methods=['PUT'])
+@application.route('/api/resources/<int:resource_id>', methods=['PUT'])
 @login_required
 def update_resource(resource_id):
     try:
@@ -427,7 +427,7 @@ def update_resource(resource_id):
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/resources/<int:resource_id>', methods=['DELETE'])
+@application.route('/api/resources/<int:resource_id>', methods=['DELETE'])
 @login_required
 def delete_resource(resource_id):
     try:
@@ -448,7 +448,7 @@ def delete_resource(resource_id):
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/user/profile', methods=['GET'])
+@application.route('/api/user/profile', methods=['GET'])
 @login_required
 def get_profile():
     try:
@@ -470,7 +470,7 @@ def get_profile():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/user/profile', methods=['PUT'])
+@application.route('/api/user/profile', methods=['PUT'])
 @login_required
 def update_profile():
     try:
@@ -495,6 +495,6 @@ def update_profile():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 if __name__ == '__main__':
-    with app.app_context():
+    with application.app_context():
         db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 3000)))
+    application.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 3000)))
