@@ -51,8 +51,14 @@ if os.getenv('AWS_ACCESS_KEY_ID'):
             aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
             region_name=os.getenv('AWS_REGION')
         )
+        # Test S3 connection and bucket access
+        s3_client.head_bucket(Bucket=os.getenv('S3_BUCKET'))
+        print("✅ S3 connection and bucket access verified")
     except Exception as e:
-        print(f"S3 initialization failed: {e}")
+        print(f"❌ S3 initialization failed: {e}")
+        # On Vercel, we need S3 working
+        if os.environ.get('VERCEL'):
+            raise Exception("S3 configuration required for Vercel deployment")
 
 # Weather API Configuration
 WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
@@ -354,28 +360,41 @@ def create_resource():
                 filename = secure_filename(file.filename)
                 unique_filename = f"{uuid.uuid4()}_{filename}"
                 
-                # Save to local storage first (always works)
-                filepath = os.path.join(application.config['UPLOAD_FOLDER'], unique_filename)
-                file.save(filepath)
-                image_url = f"/static/uploads/{unique_filename}"
-                print(f"✅ Image saved locally: {image_url}")
+                # Check if we're on Vercel (or other cloud platform)
+                is_vercel = os.environ.get('VERCEL', False)
                 
-                # Optionally try to upload to S3 (if configured)
                 if s3_client:
                     try:
-                        with open(filepath, 'rb') as f:
-                            s3_client.upload_fileobj(
-                                f,
-                                os.getenv('S3_BUCKET'),
-                                unique_filename
-                            )
+                        # Upload directly to S3 from memory (no local file needed)
+                        s3_client.upload_fileobj(
+                            file,
+                            os.getenv('S3_BUCKET'),
+                            unique_filename,
+                            ExtraArgs={'ContentType': file.content_type}
+                        )
                         s3_url = f"https://{os.getenv('S3_BUCKET')}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{unique_filename}"
-                        image_url = s3_url  # Use S3 URL if upload successful
-                        print(f"✅ Image also uploaded to S3: {s3_url}")
+                        image_url = s3_url
+                        print(f"✅ Image uploaded to S3: {s3_url}")
                     except Exception as e:
-                        print(f"⚠️  S3 upload failed (using local): {e}")
+                        print(f"❌ S3 upload failed: {e}")
+                        return jsonify({'success': False, 'message': 'Failed to upload image'}), 500
+                
+                # Only try local storage if we're not on Vercel and S3 upload failed
+                elif not is_vercel:
+                    try:
+                        os.makedirs(application.config['UPLOAD_FOLDER'], exist_ok=True)
+                        filepath = os.path.join(application.config['UPLOAD_FOLDER'], unique_filename)
+                        file.save(filepath)
+                        image_url = f"/static/uploads/{unique_filename}"
+                        print(f"✅ Image saved locally: {image_url}")
+                    except Exception as e:
+                        print(f"❌ Local save failed: {e}")
+                        return jsonify({'success': False, 'message': 'Failed to save image'}), 500
+                else:
+                    # We're on Vercel but S3 isn't configured
+                    return jsonify({'success': False, 'message': 'Image upload not available - S3 not configured'}), 500
             else:
-                print(f"⚠️  No valid image file provided or invalid file type")
+                print(f"⚠️ No valid image file provided or invalid file type")
         
         # Create resource
         resource = Resource(
