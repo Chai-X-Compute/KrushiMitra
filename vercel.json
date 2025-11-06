@@ -1,9 +1,11 @@
 {
   "version": 2,
+  "public": true,
   "builds": [
     { "src": "application.py", "use": "@vercel/python" }
   ],
   "routes": [
+    { "src": "/static/(.*)", "dest": "/static/$1" },
     { "src": "/(.*)", "dest": "application.py" }
   ]
 }
