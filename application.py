@@ -16,7 +16,9 @@ import uuid
 load_dotenv()
 
 application = Flask(__name__)
-application.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+# Use environment SECRET_KEY in production; fall back to a dev key to avoid crashes
+# when running locally. Replace via env when deploying.
+application.config['SECRET_KEY'] = os.getenv('SECRET_KEY') or 'dev-secret-change-me'
 db_url = os.getenv('DATABASE_URL')
 if not db_url:
     db_user = os.getenv('DB_USER')
@@ -103,12 +105,14 @@ def marketplace():
 @application.route('/add-resource')
 @login_required
 def add_resource():
-    return render_template('add_resource.html')
+    user = User.query.get(session['user_id'])
+    return render_template('add_resource.html', user=user)
 
 @application.route('/my-resources')
 @login_required
 def my_resources():
-    return render_template('my_resources.html')
+    user = User.query.get(session['user_id'])
+    return render_template('my_resources.html', user=user)
 
 @application.route('/profile')
 @login_required
@@ -212,20 +216,11 @@ def get_weather():
         print(f"📊 API Response Status: {response.status_code}")
         
         if response.status_code == 200:
-            weather_data = {
-                'temperature': data['main']['temp'],
-                'feels_like': data['main']['feels_like'],
-                'humidity': data['main']['humidity'],
-                'description': data['weather'][0]['description'],
-                'icon': data['weather'][0]['icon'],
-                'wind_speed': data['wind']['speed'],
-                'city': data['name'],
-                'country': data['sys']['country'],
-                'lat': data['coord']['lat'],
-                'lon': data['coord']['lon']
-            }
-            print(f"✅ Weather data for: {weather_data['city']}, {weather_data['country']}")
-            return jsonify({'success': True, 'data': weather_data})
+            # Return the full OpenWeatherMap response JSON so the frontend
+            # display functions (which expect fields like `main`, `weather`,
+            # `sys`, etc.) can use it directly.
+            print(f"✅ Weather data for: {data.get('name')}, {data.get('sys', {}).get('country')}")
+            return jsonify({'success': True, 'data': data})
         else:
             print(f"❌ Weather API error: {data.get('message', 'Unknown error')}")
             return jsonify({'success': False, 'message': data.get('message', 'Weather data not found')}), 404
@@ -388,11 +383,13 @@ def create_resource():
             name=request.form['name'],
             category=request.form['category'],
             description=request.form.get('description', ''),
-            price=float(request.form['price']),
-            listing_type=request.form['listing_type'],
+            # Use safe conversions for numeric fields. If fields are missing or
+            # empty strings, fall back to sensible defaults to avoid ValueError.
+            price=float(request.form.get('price') or 0.0),
+            listing_type=request.form.get('listing_type') or 'sell',
             condition=request.form.get('condition', 'good'),
-            age_years=int(request.form.get('age_years', 0)),
-            quality=int(request.form.get('quality', 5)),
+            age_years=int(request.form.get('age_years') or 0),
+            quality=int(request.form.get('quality') or 5),
             image_url=image_url,
             location=request.form.get('location', '')
         )
@@ -429,7 +426,7 @@ def get_resource_detail(resource_id):
             'listing_type': resource.listing_type,
             'price': float(resource.price),
             'condition': resource.condition,
-            'age': resource.age,
+            'age': resource.age_years,
             'quality': resource.quality,
             'location': resource.location,
             'image_url': resource.image_url,
@@ -548,9 +545,8 @@ def update_profile():
 app = application  # Vercel entry point
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
     # The following block is for local development and should not be run in production.
     # In a production environment like Elastic Beanstalk, a WSGI server like Gunicorn is used.
     # with application.app_context():
     #     db.create_all()
-    # application.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 3000)))
+    application.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 3000)))
