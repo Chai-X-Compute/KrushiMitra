@@ -2,17 +2,24 @@
   "version": 2,
   "public": true,
   "builds": [
-    { "src": "application.py", "use": "@vercel/python" }
+    { 
+      "src": "application.py", 
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9"
+      }
+    }
   ],
   "routes": [
-    { "handle": "filesystem" },
-    { "src": "/static/(.*)", "dest": "/static/$1" },
-    { "src": "/(.*)", "dest": "/application.py" }
-  ],
-  "functions": {
-    "application.py": {
-      "memory": 1024,
-      "maxDuration": 10
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "application.py"
     }
-  }
+  ]
 }
