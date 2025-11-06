@@ -4,11 +4,14 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="bg-white rounded-lg shadow-md p-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-6">
+    <!-- Minimal page title so top green navbar remains the primary navigation -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">
             <i class="fas fa-plus-circle text-green-600 mr-2"></i> Add New Resource
         </h1>
-        
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-8">
         <form id="addResourceForm" enctype="multipart/form-data">
             <div class="space-y-6">
                 <!-- Resource Name -->

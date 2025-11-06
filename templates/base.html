@@ -228,7 +228,6 @@
                     <a href="/marketplace" class="text-white hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
                         <i class="fas fa-store mr-1"></i> <span class="hidden lg:inline">Marketplace</span>
                     </a>
-                    {% if user %}
                     <a href="/add-resource" class="text-white hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
                         <i class="fas fa-plus-circle mr-1"></i> <span class="hidden lg:inline">Add Resource</span>
                     </a>
@@ -248,9 +247,10 @@
                              id="accountMenu" 
                              style="min-width: 14rem;">
                             <div class="px-4 py-3 border-b border-gray-100">
-                                <p class="text-sm font-medium text-gray-900 truncate" id="userName">{{ user.name if user else 'User' }}</p>
+                                <p class="text-sm font-medium text-gray-900 truncate" id="userName">{{ user.name if user else 'Guest' }}</p>
                                 <p class="text-xs text-gray-500 truncate" id="userEmail">{{ user.email if user else '' }}</p>
                             </div>
+                            {% if user %}
                             <a href="/profile" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
                                 <i class="fas fa-user-edit mr-3 w-5 text-center"></i>
                                 <span>Edit Profile</span>
@@ -267,17 +267,16 @@
                                 <i class="fas fa-sign-out-alt mr-3 w-5 text-center"></i>
                                 <span>Sign out</span>
                             </button>
+                            {% else %}
+                            <div class="px-4 py-2.5">
+                                <a href="/login" class="block w-full text-center px-4 py-2 text-sm text-white bg-green-600 rounded-md hover:bg-green-700">
+                                    <i class="fas fa-sign-in-alt mr-2"></i> Login to Access
+                                </a>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
-                    {% else %}
-                    <!-- Guest User - Show Login/Signup -->
-                    <a href="/login" class="text-white hover:bg-green-700 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                        <i class="fas fa-sign-in-alt mr-1"></i> <span>Login</span>
-                    </a>
-                    <a href="/signup" class="bg-white text-green-600 hover:bg-green-50 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                        <i class="fas fa-user-plus mr-1"></i> <span>Sign Up</span>
-                    </a>
-                    {% endif %}
+                </div>
                 </div>
             </div>
             

@@ -3,78 +3,6 @@
 {% block title %}Marketplace - KrushiMitra{% endblock %}
 
 {% block content %}
-<!-- Navigation -->
-<nav class="bg-green-600 shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex items-center">
-                <i class="fas fa-tractor text-white text-2xl mr-3"></i>
-                <span class="text-white text-xl font-bold">KrushiMitra</span>
-            </div>
-            <!-- Mobile menu button -->
-            <div class="flex md:hidden">
-                <button type="button" onclick="toggleMobileMenu()" class="text-white hover:text-green-200 focus:outline-none">
-                    <i class="fas fa-bars text-2xl"></i>
-                </button>
-            </div>
-            <!-- Desktop Navigation -->
-            <div class="hidden md:flex items-center space-x-4">
-                <a href="/dashboard" class="text-white hover:text-green-200">
-                    <i class="fas fa-home mr-1"></i> Dashboard
-                </a>
-                <a href="/marketplace" class="text-white hover:text-green-200">
-                    <i class="fas fa-store mr-1"></i> Marketplace
-                </a>
-                <a href="/add-resource" class="text-white hover:text-green-200">
-                    <i class="fas fa-plus-circle mr-1"></i> Add Resource
-                </a>
-                <a href="/my-resources" class="text-white hover:text-green-200">
-                    <i class="fas fa-box mr-1"></i> My Resources
-                </a>
-                <a href="/profile" class="text-white hover:text-green-200">
-                    <i class="fas fa-user mr-1"></i> Profile
-                </a>
-                <div class="language-selector">
-                    <i class="fas fa-globe"></i>
-                    <div id="google_translate_element"></div>
-                </div>
-                <button onclick="logout()" class="text-white hover:text-green-200">
-                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
-                </button>
-            </div>
-        </div>
-    </div>
-    <!-- Mobile Navigation Menu -->
-    <div id="mobileMenu" class="hidden md:hidden bg-green-600 pb-4">
-        <div class="px-4 space-y-3">
-            <a href="/dashboard" class="block text-white hover:text-green-200 py-2">
-                <i class="fas fa-home mr-1"></i> Dashboard
-            </a>
-            <a href="/marketplace" class="block text-white hover:text-green-200 py-2">
-                <i class="fas fa-store mr-1"></i> Marketplace
-            </a>
-            <a href="/add-resource" class="block text-white hover:text-green-200 py-2">
-                <i class="fas fa-plus-circle mr-1"></i> Add Resource
-            </a>
-            <a href="/my-resources" class="block text-white hover:text-green-200 py-2">
-                <i class="fas fa-box mr-1"></i> My Resources
-            </a>
-            <a href="/profile" class="block text-white hover:text-green-200 py-2">
-                <i class="fas fa-user mr-1"></i> Profile
-            </a>
-            <div class="py-2">
-                <div class="language-selector block text-white">
-                    <i class="fas fa-globe mr-2"></i>
-                    <div id="mobile_google_translate_element"></div>
-                </div>
-            </div>
-            <button onclick="logout()" class="block w-full text-left text-white hover:text-green-200 py-2">
-                <i class="fas fa-sign-out-alt mr-1"></i> Logout
-            </button>
-        </div>
-    </div>
-</nav>
-
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -154,13 +82,13 @@
 <div id="resourceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto">
         <div class="p-6">
-            <div class="flex justify-between items-start mb-4">
+            <div class="flex justify-between items-start">
                 <h2 id="modalTitle" class="text-2xl font-bold text-gray-900"></h2>
-                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 -mt-2 -mr-2 p-2">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
-            <div id="modalContent"></div>
+            <div id="modalContent" class="mt-4"></div>
         </div>
     </div>
 </div>
@@ -168,21 +96,6 @@
 
 {% block extra_js %}
 <script>
-    // Mobile menu functionality
-    function toggleMobileMenu() {
-        const mobileMenu = document.getElementById('mobileMenu');
-        mobileMenu.classList.toggle('hidden');
-    }
-
-    // Close mobile menu when clicking outside
-    document.addEventListener('click', (e) => {
-        const mobileMenu = document.getElementById('mobileMenu');
-        const mobileMenuButton = document.querySelector('button[onclick="toggleMobileMenu()"]');
-        
-        if (!mobileMenu.contains(e.target) && !mobileMenuButton.contains(e.target) && !mobileMenu.classList.contains('hidden')) {
-            mobileMenu.classList.add('hidden');
-        }
-    });
     let allResources = [];
     let currentFilter = 'all';
     // Logged-in flag from server
@@ -321,12 +234,15 @@
         modalTitle.textContent = resource.name;
         modalContent.innerHTML = `
             <!-- Image -->
-            <div class="mb-6">
-                <img src="${resource.image_url || '/static/images/placeholder.svg'}" alt="${resource.name}" class="w-full h-64 object-cover rounded-lg shadow-md" onerror="this.onerror=null; this.src='/static/images/placeholder.svg';">
+            <div class="mb-6 bg-gray-100 rounded-lg overflow-hidden">
+                <img src="${resource.image_url || '/static/images/placeholder.svg'}" 
+                     alt="${resource.name}" 
+                     class="w-full h-64 object-cover" 
+                     onerror="this.onerror=null; this.src='/static/images/placeholder.svg';">
             </div>
 
             <!-- Details Grid -->
-            <div class="grid grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
+            <div class="grid grid-cols-2 gap-4 mb-6 bg-gray-50 p-5 rounded-xl">
                 <div class="space-y-1">
                     <p class="text-xs text-gray-500 uppercase tracking-wide">Category</p>
                     <p class="font-semibold text-gray-900 capitalize">${resource.category?.replace(/_/g,' ') || 'N/A'}</p>
@@ -356,55 +272,102 @@
             </div>
 
             <!-- Description -->
-            <div class="mb-6">
-                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Description</h3>
-                <p class="text-gray-800 leading-relaxed">${resource.description || ''}</p>
+            <div class="mb-6 bg-white p-5 rounded-xl border border-gray-100">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Description</h3>
+                <p class="text-gray-700 leading-relaxed">${resource.description || 'No description provided.'}</p>
             </div>
 
-            <!-- Owner Information -->
-            <div class="border-t pt-6 mb-6">
-                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
-                    <i class="fas fa-user-circle mr-2 text-green-600"></i>Owner Information
+            <!-- Owner Information (Only show if logged in) -->
+            ${isLoggedIn ? `
+            <div class="border-t border-gray-200 pt-6 mb-6">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center">
+                    <i class="fas fa-user-circle mr-2 text-green-600"></i> Contact Owner
                 </h3>
-
-                ${isLoggedIn ? `
-                <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-4 space-y-3 border border-green-100">
-                    <div class="flex items-center"><i class="fas fa-user mr-3 w-5 text-green-600"></i><span class="font-semibold text-gray-900">${resource.owner?.name || 'Owner'}</span></div>
-                    ${resource.owner?.email ? `<div class=\"flex items-center\"><i class=\"fas fa-envelope mr-3 w-5 text-green-600\"></i><a class=\"text-blue-600 hover:underline break-all\" href=\"mailto:${resource.owner.email}\">${resource.owner.email}</a></div>` : ''}
-                    ${resource.owner?.phone ? `<div class=\"flex items-center\"><i class=\"fas fa-phone mr-3 w-5 text-green-600\"></i><a class=\"text-blue-600 hover:underline font-medium\" href=\"tel:${resource.owner.phone}\">${resource.owner.phone}</a></div>` : ''}
-                    ${resource.owner?.location ? `<div class=\"flex items-center\"><i class=\"fas fa-map-marker-alt mr-3 w-5 text-green-600\"></i><span class=\"text-gray-700\">${resource.owner.location}</span></div>` : ''}
-                </div>
-                ` : `
-                <div class="relative">
-                    <div class="bg-gray-100 rounded-lg p-4 space-y-3 blur-sm select-none pointer-events-none">
-                        <div class="flex items-center"><i class="fas fa-user mr-3 w-5 text-gray-400"></i><span class="font-semibold text-gray-600">John Doe</span></div>
-                        <div class="flex items-center"><i class="fas fa-envelope mr-3 w-5 text-gray-400"></i><span class="text-gray-600">owner@example.com</span></div>
-                        <div class="flex items-center"><i class="fas fa-phone mr-3 w-5 text-gray-400"></i><span class="text-gray-600">+91 9876543210</span></div>
-                        <div class="flex items-center"><i class="fas fa-map-marker-alt mr-3 w-5 text-gray-400"></i><span class="text-gray-600">Location</span></div>
-                    </div>
-                    <div class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 rounded-lg">
-                        <div class="text-center p-4">
-                            <i class="fas fa-lock text-blue-600 text-3xl mb-2"></i>
-                            <p class="font-semibold text-gray-900 mb-1">Login to View Contact</p>
-                            <p class="text-sm text-gray-600">Sign in to see owner details</p>
+                <div class="bg-gray-50 rounded-xl p-5 space-y-4">
+                    <div class="flex items-start">
+                        <div class="bg-green-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-user text-green-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Name</p>
+                            <p class="font-medium text-gray-900">${resource.owner?.name || 'Not provided'}</p>
                         </div>
                     </div>
+                    ${resource.owner?.phone ? `
+                    <div class="flex items-start">
+                        <div class="bg-green-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-phone text-green-600 text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-500">Phone</p>
+                            <a href="tel:${resource.owner.phone}" class="font-medium text-blue-600 hover:underline">${resource.owner.phone}</a>
+                        </div>
+                    </div>` : ''}
+                    ${resource.owner?.email ? `
+                    <div class="flex items-start">
+                        <div class="bg-green-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-envelope text-green-600 text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-500">Email</p>
+                            <a href="mailto:${resource.owner.email}" class="font-medium text-blue-600 hover:underline break-all">${resource.owner.email}</a>
+                        </div>
+                    </div>` : ''}
+                    ${resource.owner?.location ? `
+                    <div class="flex items-start">
+                        <div class="bg-green-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-map-marker-alt text-green-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Location</p>
+                            <p class="font-medium text-gray-900">${resource.owner.location}</p>
+                        </div>
+                    </div>` : ''}
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                        ${resource.owner?.phone ? `
+                        <a href="tel:${resource.owner.phone}" 
+                           class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-lg text-center transition flex items-center justify-center">
+                            <i class="fas fa-phone mr-2"></i> Call Owner
+                        </a>
+                        <a href="https://wa.me/${resource.owner.phone.replace(/\D/g, '')}?text=Hi, I'm interested in your ${encodeURIComponent(resource.name)} listed on KrushiMitra"
+                           target="_blank"
+                           class="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-4 rounded-lg text-center transition flex items-center justify-center">
+                            <i class="fab fa-whatsapp text-lg mr-2"></i> WhatsApp
+                        </a>
+                        ` : ''}
+                        <button onclick="closeModal()" 
+                                class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2.5 px-4 rounded-lg transition flex items-center justify-center">
+                            <i class="fas fa-times mr-2"></i> Close
+                        </button>
+                    </div>
                 </div>
-                `}
+            </div>
+            ` : `
+            <!-- Login Prompt for Guests -->
+            <div class="border-t border-gray-200 pt-6 mb-6">
+                <div class="bg-blue-50 rounded-xl p-6 text-center">
+                    <div class="bg-white w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-lock text-blue-500 text-2xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-1">Sign in to contact the owner</h4>
+                    <p class="text-gray-600 text-sm mb-4">Create an account or login to view contact details</p>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <a href="/login" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-lg text-center transition">
+                            Login
+                        </a>
+                        <a href="/signup" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-medium py-2.5 px-4 rounded-lg text-center transition">
+                            Create Account
+                        </a>
+                    </div>
+                </div>
+            </div>
+            `}
             </div>
 
-            <!-- Action Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                ${isLoggedIn && resource.owner?.phone ? `
-                <a href="tel:${resource.owner.phone}" class="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition text-center flex items-center justify-center font-medium shadow-md"><i class="fas fa-phone mr-2"></i> Call</a>
-                <a href="https://wa.me/${(resource.owner.phone||'').replace(/\D/g,'')}" target="_blank" class="bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 transition text-center flex items-center justify-center font-medium shadow-md"><i class="fab fa-whatsapp mr-2 text-lg"></i> WhatsApp</a>
-                <button onclick="closeModal()" class="bg-gray-200 text-gray-800 px-4 py-3 rounded-lg hover:bg-gray-300 transition font-medium shadow-md"><i class="fas fa-times mr-2"></i> Close</button>
-                ` : `
-                <a href="/login" class="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition text-center flex items-center justify-center font-medium shadow-md"><i class="fas fa-sign-in-alt mr-2"></i> Login</a>
-                <a href="/signup" class="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition text-center flex items-center justify-center font-medium shadow-md"><i class="fas fa-user-plus mr-2"></i> Sign Up</a>
-                <button onclick="closeModal()" class="bg-gray-200 text-gray-800 px-4 py-3 rounded-lg hover:bg-gray-300 transition font-medium shadow-md"><i class="fas fa-times mr-2"></i> Close</button>
-                `}
-            </div>
+            <!-- Spacer before bottom -->
+            <div class="h-4"></div>
         `;
         
         modal.classList.remove('hidden');

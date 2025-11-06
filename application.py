@@ -11,9 +11,33 @@ from urllib.parse import quote_plus
 import boto3
 from werkzeug.utils import secure_filename
 import uuid
+import firebase_admin
+from firebase_admin import credentials, auth
 
 # Load environment variables
 load_dotenv()
+
+# Firebase initialization
+try:
+    # Check if already initialized
+    firebase_admin.get_app()
+except ValueError:
+    # Not initialized, do initialization
+    try:
+        service_account_path = os.path.join(os.path.dirname(__file__), 'serviceAccountKey.json')
+        if os.path.exists(service_account_path):
+            cred = credentials.Certificate(service_account_path)
+            firebase_admin.initialize_app(cred)
+            print("✅ Firebase initialized successfully")
+        else:
+            print("❌ Firebase service account file not found")
+            if os.environ.get('VERCEL'):
+                # On Vercel, we need Firebase working
+                raise Exception("Firebase configuration required for Vercel deployment")
+    except Exception as e:
+        print(f"❌ Firebase initialization error: {str(e)}")
+        if os.environ.get('VERCEL'):
+            raise
 
 application = Flask(__name__)
 # Use environment SECRET_KEY in production; fall back to a dev key to avoid crashes
@@ -73,8 +97,29 @@ def allowed_file(filename):
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # Check session for Flask user_id
         if 'user_id' not in session:
-            return redirect(url_for('login'))
+            # Check for Firebase token in Authorization header
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return jsonify({'success': False, 'message': 'No authentication token'}), 401
+            
+            try:
+                # Verify the token with Firebase
+                id_token = auth_header.split('Bearer ')[1]
+                decoded_token = auth.verify_id_token(id_token)
+                firebase_uid = decoded_token['uid']
+                
+                # Find user by Firebase UID
+                user = User.query.filter_by(firebase_uid=firebase_uid).first()
+                if not user:
+                    return jsonify({'success': False, 'message': 'User not found'}), 404
+                
+                # Set session
+                session['user_id'] = user.id
+            except Exception as e:
+                return jsonify({'success': False, 'message': 'Invalid authentication token'}), 401
+        
         return f(*args, **kwargs)
     return decorated_function
 
@@ -133,14 +178,39 @@ def register():
     try:
         data = request.json
         
+        # Verify Firebase ID token
+        id_token = data.get('id_token')
+        if not id_token:
+            return jsonify({'success': False, 'message': 'No ID token provided'}), 401
+            
+        try:
+            # Verify the token with Firebase
+            decoded_token = auth.verify_id_token(id_token)
+            firebase_uid = decoded_token['uid']
+        except Exception as e:
+            return jsonify({'success': False, 'message': 'Invalid ID token'}), 401
+        
         # Check if user already exists
-        existing_user = User.query.filter_by(email=data['email']).first()
+        existing_user = User.query.filter((User.email == data['email']) | (User.firebase_uid == firebase_uid)).first()
         if existing_user:
-            return jsonify({'success': False, 'message': 'User already exists'}), 400
+            # Update existing user's Firebase UID if needed
+            if existing_user.firebase_uid != firebase_uid:
+                existing_user.firebase_uid = firebase_uid
+                db.session.commit()
+            session['user_id'] = existing_user.id
+            return jsonify({
+                'success': True,
+                'message': 'User already exists, updated Firebase UID',
+                'user': {
+                    'id': existing_user.id,
+                    'name': existing_user.name,
+                    'email': existing_user.email
+                }
+            })
         
         # Create new user
         user = User(
-            firebase_uid=data.get('firebase_uid', str(uuid.uuid4())),
+            firebase_uid=firebase_uid,
             email=data['email'],
             name=data['name'],
             phone=data.get('phone', ''),
@@ -171,11 +241,28 @@ def api_login():
     try:
         data = request.json
         
+        # Verify Firebase ID token
+        id_token = data.get('id_token')
+        if not id_token:
+            return jsonify({'success': False, 'message': 'No ID token provided'}), 401
+            
+        try:
+            # Verify the token with Firebase
+            decoded_token = auth.verify_id_token(id_token)
+            firebase_uid = decoded_token['uid']
+        except Exception as e:
+            return jsonify({'success': False, 'message': 'Invalid ID token'}), 401
+        
         # Find user by email or firebase_uid
-        user = User.query.filter_by(email=data['email']).first()
+        user = User.query.filter((User.email == data['email']) | (User.firebase_uid == firebase_uid)).first()
         
         if not user:
             return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Update Firebase UID if needed
+        if user.firebase_uid != firebase_uid:
+            user.firebase_uid = firebase_uid
+            db.session.commit()
         
         session['user_id'] = user.id
         
