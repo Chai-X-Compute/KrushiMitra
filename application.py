@@ -295,6 +295,16 @@ def get_resources():
         resources_list = []
         for resource in resources:
             owner = User.query.get(resource.owner_id)
+            # Validate and set fallback for image URL
+            image_url = resource.image_url
+            if not image_url or not image_url.strip():
+                image_url = '/static/images/placeholder.svg'
+            elif image_url.startswith('/static/'):
+                # For local files, check if they exist
+                file_path = os.path.join(application.root_path, image_url.lstrip('/'))
+                if not os.path.exists(file_path):
+                    image_url = '/static/images/placeholder.svg'
+            
             resources_list.append({
                 'id': resource.id,
                 'name': resource.name,
@@ -305,7 +315,7 @@ def get_resources():
                 'condition': resource.condition,
                 'age_years': resource.age_years,
                 'quality': resource.quality,
-                'image_url': resource.image_url,
+                'image_url': image_url,
                 'rating': resource.rating,
                 'owner': {
                     'name': owner.name,
@@ -396,6 +406,10 @@ def create_resource():
             else:
                 print(f"⚠️ No valid image file provided or invalid file type")
         
+        # Validate image URL before creating resource
+        if not image_url or not isinstance(image_url, str) or not image_url.strip():
+            image_url = '/static/images/placeholder.svg'
+        
         # Create resource
         resource = Resource(
             owner_id=session['user_id'],
@@ -437,6 +451,15 @@ def get_resource_detail(resource_id):
         # Get owner information
         owner = User.query.get(resource.owner_id)
         
+        # Validate image URL
+        image_url = resource.image_url
+        if not image_url or not isinstance(image_url, str) or not image_url.strip():
+            image_url = '/static/images/placeholder.svg'
+        elif image_url.startswith('/static/'):
+            file_path = os.path.join(application.root_path, image_url.lstrip('/'))
+            if not os.path.exists(file_path):
+                image_url = '/static/images/placeholder.svg'
+        
         resource_data = {
             'id': resource.id,
             'name': resource.name,
@@ -448,7 +471,7 @@ def get_resource_detail(resource_id):
             'age': resource.age_years,
             'quality': resource.quality,
             'location': resource.location,
-            'image_url': resource.image_url,
+            'image_url': image_url,
             'is_available': resource.is_available,
             'created_at': resource.created_at.isoformat() if resource.created_at else None,
             'owner': {
